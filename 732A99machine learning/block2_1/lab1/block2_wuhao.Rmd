@@ -1,0 +1,173 @@
+---
+title: "Untitled"
+author: "Wuhao Wang"
+date: "12/8/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+train <- read.csv('train.csv')
+test  <- read.csv('gt_2015.csv')
+valid <- read.csv('gt_2014.csv')
+train <- train[,-1]
+library(ggplot2)
+library(e1071)
+summary(test[,3])
+summary(train[,3])
+```
+
+## Data View
+
+The dataset contains 36733 instances of 11 sensor measures aggregated over one hour (by means of average or sum) from a gas turbine located in Turkey's north western region for the purpose of studying flue gas emissions, namely CO and NOx (NO + NO2). The data comes from the same power plant as the dataset used for predicting hourly net energy yield. By contrast, this data is collected in another data range (01.01.2011 - 31.12.2015), includes gas turbine parameters (such as Turbine Inlet Temperature and Compressor Discharge pressure) in addition to the ambient variables. Note that the dates are not given in the instances but the data are sorted in chronological order. See the attribute information and relevant paper for details. Kindly follow the protocol mentioned in the paper (using the first three years' data for training/ cross-validation and the last two for testing) for reproducibility and comparability of works. The dataset can be well used for predicting turbine energy yield (TEY) using ambient variables as features.
+
+We use other 10 features to predict `NOx`. All the features are numeric and there is no missing value. We have 22191 observations as training data, 784 observations as test data and 7158 observations as valid data.
+
+## SVM
+
+First, we use the `svm` from `e1071` package without any setting to do the prediction. The plot below shows the comparison between original data and prediction (pick only 100 samples).
+
+```{r , echo=FALSE}
+mean_train <- apply(train,2,mean)
+vari <- sqrt(apply(train,2,var))
+for (i in 1:10) 
+{
+  train[,i] <- (train[,i]-mean_train[i])/vari[i]
+  test[,i] <- (test[,i]-mean_train[i])/vari[i]
+  valid[,i] <- (valid[,i]-mean_train[i])/vari[i]
+}
+test <- as.data.frame(test)
+valid <- as.data.frame(valid)
+glm1 <- svm(NOX~.,data=train)
+tr_pre <- predict(glm1,train)
+va_pre <- predict(glm1,valid)
+df <- data.frame(x = 1:100,value = train[1:100,11],pre = tr_pre[1:100])
+ggplot(data = df)+
+  geom_line(aes(x=x,y=value,color='original'))+
+  geom_line(aes(x=x,y=pre,color='prediction'))+
+  ylab("NOX value")+
+  ggtitle('prediction result of 100 samples')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+print(paste0('Mse in train:', mean((tr_pre-train[,11])**2)))
+print(paste0('Mse in valid:', mean((va_pre-valid[,11])**2)))
+```
+
+From the result, we can see that the result is not good. Now we are going to optimize hyper parameters. We use train and valid data to find best $\gamma$. Since `optim()` function costs too much time(more than 2 hours), we use another strategy to find optimal $\gamma$ :
+
+The default setting is $\frac{1}{11}$. First, try $\gamma$ from list( 0.07,0.08,......0.15), we find the optimal $\gamma$ is 0.15, and the MSE keep decrease when $\gamma$ increase. So we can say that the optimal $\gamma$is larger equal than 0.05. Second, we try $\gamma$ from list(0.15,0.16....0.25), and we find the optimal $\gamma$ is 0.21.
+
+```{r , echo=FALSE}
+# round 1
+pre_res <- c()
+first_iter <- 7:15/100
+for(gamma in first_iter)
+{
+  sv <- svm(NOX~.,data=train,gamma=gamma)
+  pre <- predict(sv,valid)
+  pre_res <- c(pre_res,mean((pre-valid[,11])**2))
+}
+best_gamma <- first_iter[which.min(pre_res)]
+sv <- svm(NOX~.,data=train,gamma=best_gamma)
+test_pre <- predict(sv,test)
+df <- data.frame(gamma = first_iter,mes = pre_res)
+ggplot(data = df,aes(x=gamma,y=mes))+
+  geom_point()+
+  ylab("MSE")+
+  ggtitle('gamma vs MSE on valid data')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+# round2
+pre_res <- c()
+second <- 15:25/100
+for(gamma in second)
+{
+  sv <- svm(NOX~.,data=train,gamma=gamma)
+  pre <- predict(sv,valid)
+  pre_res <- c(pre_res,mean((pre-valid[,11])**2))
+}
+best_gamma <- second[which.min(pre_res)]
+df <- data.frame(gamma = second,mes = pre_res)
+ggplot(data = df,aes(x=gamma,y=mes))+
+  geom_point()+
+  ylab("MSE")+
+  ggtitle('gamma vs MSE on valid data')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+sv <- svm(NOX~.,data=train,gamma=best_gamma)
+test_pre <- predict(sv,test)
+print(paste0('Mse on test(best gamma):', mean((test_pre-test[,11])**2)))
+sv <- svm(NOX~.,data=train)
+test_pre <- predict(sv,test)
+print(paste0('Mse on test(default gamma):', mean((test_pre-test[,11])**2)))
+```
+
+## APPENDIX
+
+```{r , eval=FALSE}
+train <- read.csv('train.csv')
+test  <- read.csv('gt_2015.csv')
+valid <- read.csv('gt_2014.csv')
+train <- train[,-1]
+library(ggplot2)
+library(e1071)
+mean_train <- apply(train,2,mean)
+vari <- sqrt(apply(train,2,var))
+for (i in 1:10) 
+{
+  train[,i] <- (train[,i]-mean_train[i])/vari[i]
+  test[,i] <- (test[,i]-mean_train[i])/vari[i]
+  valid[,i] <- (valid[,i]-mean_train[i])/vari[i]
+}
+test <- as.data.frame(test)
+valid <- as.data.frame(valid)
+glm1 <- svm(NOX~.,data=train)
+tr_pre <- predict(glm1,train)
+va_pre <- predict(glm1,valid)
+df <- data.frame(x = 1:100,value = train[1:100,11],pre = tr_pre[1:100])
+ggplot(data = df)+
+  geom_line(aes(x=x,y=value,color='original'))+
+  geom_line(aes(x=x,y=pre,color='prediction'))+
+  ylab("NOX value")+
+  ggtitle('prediction result of 100 samples')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+print(paste0('Mse in train:', mean((tr_pre-train[,11])**2)))
+print(paste0('Mse in valid:', mean((va_pre-valid[,11])**2)))
+# round 1
+pre_res <- c()
+first_iter <- 7:15/100
+for(gamma in first_iter)
+{
+  sv <- svm(NOX~.,data=train,gamma=gamma)
+  pre <- predict(sv,valid)
+  pre_res <- c(pre_res,mean((pre-valid[,11])**2))
+}
+best_gamma <- first_iter[which.min(pre_res)]
+sv <- svm(NOX~.,data=train,gamma=best_gamma)
+test_pre <- predict(sv,test)
+df <- data.frame(gamma = first_iter,mes = pre_res)
+ggplot(data = df,aes(x=gamma,y=mes))+
+  geom_point()+
+  ylab("MSE")+
+  ggtitle('gamma vs MSE on valid data')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+# round2
+pre_res <- c()
+second <- 15:25/100
+for(gamma in second)
+{
+  sv <- svm(NOX~.,data=train,gamma=gamma)
+  pre <- predict(sv,valid)
+  pre_res <- c(pre_res,mean((pre-valid[,11])**2))
+}
+best_gamma <- second[which.min(pre_res)]
+df <- data.frame(gamma = second,mes = pre_res)
+ggplot(data = df,aes(x=gamma,y=mes))+
+  geom_point()+
+  ylab("MSE")+
+  ggtitle('gamma vs MSE on valid data')+
+  theme(plot.title = ggplot2::element_text(hjust=0.5))
+sv <- svm(NOX~.,data=train,gamma=best_gamma)
+test_pre <- predict(sv,test)
+print(paste0('Mse on test(best gamma):', mean((test_pre-test[,11])**2)))
+sv <- svm(NOX~.,data=train)
+test_pre <- predict(sv,test)
+print(paste0('Mse on test(default gamma):', mean((test_pre-test[,11])**2)))
+```

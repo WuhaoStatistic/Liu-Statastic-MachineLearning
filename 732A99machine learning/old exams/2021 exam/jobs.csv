@@ -1,0 +1,26 @@
+Country,Block,Agr,Min,Man,PS,Con,Fin,SPS,TC
+Belgium,Western,3.3,0.9,27.6,0.9,8.2,6.2,26.6,7.2
+Denmark,Western,9.2,0.1,21.8,0.6,8.3,6.5,32.2,7.1
+France,Western,10.8,0.8,27.5,0.9,8.9,6,22.6,5.7
+W. Germany,Western,6.7,1.3,35.8,0.9,7.3,5,22.3,6.1
+Ireland,Western,23.2,1,20.7,1.3,7.5,2.8,20.8,6.1
+Italy,Western,15.9,0.6,27.6,0.5,10,1.6,20.1,5.7
+Luxembourg,Western,7.7,3.1,30.8,0.8,9.2,4.6,19.2,6.2
+Netherlands,Western,6.3,0.1,22.5,1,9.9,6.8,28.5,6.8
+United Kingdom,Western,2.7,1.4,30.2,1.4,6.9,5.7,28.3,6.4
+Austria,Western,12.7,1.1,30.2,1.4,9,4.9,16.8,7
+Finland,Western,13,0.4,25.9,1.3,7.4,5.5,24.3,7.6
+Greece,Western,41.4,0.6,17.6,0.6,8.1,2.4,11,6.7
+Norway,Western,9,0.5,22.4,0.8,8.6,4.7,27.6,9.4
+Portugal,Western,27.8,0.3,24.5,0.6,8.4,2.7,16.7,5.7
+Spain,Western,22.9,0.8,28.5,0.7,11.5,8.5,11.8,5.5
+Sweden,Western,6.1,0.4,25.9,0.8,7.2,6,32.4,6.8
+Switzerland,Western,7.7,0.2,37.8,0.8,9.5,5.3,15.4,5.7
+Bulgaria,Eastern,23.6,1.9,32.3,0.6,7.9,0.7,18.2,6.7
+Czechoslovakia,Eastern,16.5,2.9,35.5,1.2,8.7,0.9,17.9,7
+E. Germany,Eastern,4.2,2.9,41.2,1.3,7.6,1.2,22.1,8.4
+Hungary,Eastern,21.7,3.1,29.6,1.9,8.2,0.9,17.2,8
+Poland,Eastern,31.1,2.5,25.7,0.9,8.4,0.9,16.1,6.9
+Rumania,Eastern,34.7,2.1,30.1,0.6,8.7,1.3,11.7,5
+USSR,Eastern,23.7,1.4,25.8,0.6,9.2,0.5,23.6,9.3
+Yugoslavia,Eastern,48.7,1.5,16.8,1.1,4.9,11.3,5.3,4
