@@ -1,0 +1,302 @@
+---
+title: "Lab3"
+author: "Wuhao Wang"
+date: "5/4/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Gibbs sampler for a normal model
+
+```{r , include=FALSE}
+library(mvtnorm)
+library(ggplot2)
+library(coda)
+library(rstan)
+library(LaplacesDemon)
+```
+
+a
+
+```{r echo=TRUE}
+data <- readRDS('precipitation.rds')
+data <- log(data)
+set.seed(1234567)
+mu0 <- 0
+t0 <- 1
+v0 <- 1
+sigma0 <- 1
+sample_mu <- c(mu0)
+sample_sigma <- c(sigma0)
+sample_data <- c()
+n <- length(data)
+
+for (i in 2:8000) 
+{
+  # L2 P4
+  w <- (n/sample_sigma[i-1])/(n/sample_sigma[i-1]+1/t0)
+  mu_n <- w*mean(data)+(1-w)*sample_mu[i-1]
+  tn <- 1/(n/sample_sigma[i-1]+1/t0)
+  sample_mu <- c(sample_mu,rnorm(1,mu_n,sqrt(tn)))
+  # L7 P16
+  vn <- v0+n
+  sigma_n <- (v0*sigma0+sum((data-sample_mu[i-1])**2))/vn
+  
+  sample_sigma <- c(sample_sigma,rinvchisq(n = 1, df = vn, scale = sigma_n))
+  # get data draw
+  sample_data <- c(sample_data,rnorm(1,sample_mu[i-1],sample_sigma[i-1]))
+}
+IF_mu <- 1+2*sum(acf(sample_mu,plot=FALSE)$acf[-1]) 
+IF_sigma <- 1+2*sum(acf(sample_sigma,plot=FALSE)$acf[-1])
+cat('IF of mu is ',IF_mu,'\n')
+cat('IF of sigma is ',IF_sigma,'\n')
+plot(1:500,sample_mu[1:500],main='first 500 samples of mu',type = 'line')
+plot(1:500,sample_sigma[1:500],main='first 500 samples of sigma',type='line')
+```
+
+From the result above, we can see that the Inefficiency factors are quite small and both mu and sigma need only a short burn-in period to meet convergence.
+
+b
+
+```{r echo=TRUE}
+sample_data <- exp(sample_data)
+data <- exp(data)
+plot(density(data),lwd = 4, col='blue',main = 'Original data vs Posterior data')
+lines(density(sample_data),col = 'red',lwd = 2)
+```
+
+In the plot, the red line is density of sampled data, the blue line is original data, we can see that it matches quite well.
+
+## 2 Metropolis Random Walk for Poisson regression
+
+a
+
+```{r echo=TRUE}
+rm(list=ls())
+X <- read.table('eBayNumberOfBidderData.dat',header = TRUE)
+Y <- X$nBids
+mle <- glm(data = X[,-2],nBids~.,family='poisson')
+summary(mle)
+
+
+```
+
+From the summary result above, we can find that `VeryfyID`,`Sealed`,`LogBook` and `MinBidShare` are significant.
+
+b
+
+```{r echo=TRUE}
+X2 <- as.matrix(X[,-1])
+n_fea <- ncol(X2)
+n <- nrow(X2)
+mu <- rep(0,n_fea)
+beta <- as.matrix(rep(0,n_fea))
+sigma <- 100*(solve(t(X2)%*%X2))
+log_possion <- function(beta,X,y,mu,sigma1)
+{
+  lambda <- exp(X%*%beta)
+  log_like <- sum(-lambda+y*log(lambda)-log(factorial(y)))
+  log_prior <-dmvnorm(t(beta),mu,sigma1,log = TRUE)
+  return (log_like+log_prior)
+}
+opt <- optim(par = beta,fn=log_possion,X=X2,y=Y,mu=mu,sigma1=sigma,hessian = TRUE,method='BFGS',control = list(fnscale = -1))
+mode <- opt$par
+hessian <- -solve(opt$hessian)
+cat('the posterior mode is ','\n')
+print(mode)
+cat('the variance of posterior is','\n')
+print(hessian)
+```
+
+c
+
+```{r echo=TRUE}
+log_nor <- function(beta,X,y,mu,sigma1)
+{
+  lambda <- exp(X%*%beta)
+  log_like <- sum(y*log(lambda)-lambda)
+  log_prior <- dmvnorm(t(beta),mu,sigma1,log = TRUE)
+  return (log_like+log_prior)
+}
+# X should not contain the target variable
+# theta is a vector
+
+RWM_Sampler <- function(theta,c,logPostFun,hessian,n_draws=3500,...)
+{
+  theta_m <- matrix(0,nrow = n_draws,ncol=length(theta))
+  theta_m[1,] <- theta
+  count <- 2
+  total_it <- 0
+  while(count <= n_draws)
+  {
+    total_it <- total_it+1
+    sample <- t(rmvnorm(1,mean=theta_m[count-1,],sigma = c*hessian))
+    up <- logPostFun(sample,...)
+    down <- logPostFun(theta_m[count-1,],...)
+    alpha <- min(1,exp(up-down))
+    if (runif(1) <= alpha)
+    {
+      theta_m[count,] <- sample
+      count <- count+1
+    }
+  }
+  cat('accept rate is: ',count/total_it,'\n')
+  return(theta_m)
+}
+
+samples <- RWM_Sampler(t(mu),0.55,log_nor,hessian,X=X2,y=Y,mu=mu,sigma1=sigma)
+cat('The mean vector from random walk',colMeans(samples),'\n')
+cat('The result from (b)',t(mode))
+```
+
+From the result above, we can see the draws can match the result from b) very well.
+
+```{r}
+n_draw <- n-1
+for (i in 1:9) 
+{
+title <- paste('draw samples in dimension: ',i-1)
+ylabel <- paste('beta',i-1)
+plot(1:n_draw,samples[1:n_draw,i],main = title,xlab = 'iteration',ylab = ylabel,type = 'l')
+lines(1:n_draw,rep(mean(samples[1:n_draw,i]),n_draw),type = 'l',col='red') 
+}
+```
+
+The plots above also show that all dimensions only need a short burn-in period to reach convergence.
+
+d
+
+```{r}
+# situation include constant 1
+situation <- c(1,1,0,1,0,1,0,1.2,0.8)
+beta <- samples
+a <- t(situation)%*%t(beta)
+data <- c()
+for (i in 1:length(a)) 
+{
+  data <- c(data,rpois(1,exp(a[1,i])))  
+}
+hist(data,freq=FALSE,breaks = length(unique(data)),main = 'bids of given observation')
+cat('the probability of no bid is:',sum(data==0)/length(data))
+```
+
+## 3 Time series models in Stan
+
+a
+
+```{r}
+rm(list=ls())
+ar1_a <- function(mu,f,sigma,t)
+{
+  res <- c(mu)
+  for (i in 2:t) 
+  {
+    res <- c(res,mu+f*(res[i-1]-mu)+rnorm(1,0,sqrt(sigma)))  
+  }
+  return(res)
+}
+df <- data.frame(index=1:300)
+for (i in 1:5) 
+{
+  f <- i/2 - 1.5
+  df <-cbind(df,ar1_a(13,f,3,300))
+}
+colnames(df) <- c('index','f_minus_1','f_minus_0.5','f_0','f_0.5','f_1')
+
+ggplot()+geom_line(data = df,aes(x = index,y = f_minus_1,colour = "-1"),size=1)+
+  geom_line(data = df,aes(x = index,y = f_minus_0.5,colour ='-0.5'),size=1) + 
+  geom_line(data = df,aes(x = index,y = f_0,colour ='0'),size=1) +
+  geom_line(data = df,aes(x = index,y = f_0.5,colour ='0.5'),size=1) +
+  geom_line(data = df,aes(x = index,y = f_1,colour ='1'),size=1) +
+  xlab("time")+ylab("value")+
+  ggtitle("plot")+
+  theme(text=element_text(size=13))
+```
+
+When the absolute value of phi increase, the variance of draws will also increase.
+
+b.i
+
+```{r}
+mu <- 13
+sigma <- 3
+t <- 300
+sample1 <- ar1_a(mu,0.2,sigma,t)
+sample2 <- ar1_a(mu,0.95,sigma,t)
+```
+
+```{r}
+StanModel <- '
+data {
+int<lower=0> N;
+vector[N] y;
+}
+parameters {
+real mu;
+real phi;
+real<lower=0> sigma2;
+}
+model {
+mu ~ normal(0,100);// Normal with mean 0, st.dev. 100
+phi ~ normal(0,1);
+sigma2 ~ scaled_inv_chi_square(1,2); // Scaled-inv-chi2 with nu 1,sigma 2;
+for (n in 2:N)
+y[n] ~ normal(mu + phi * (y[n-1]-mu), sqrt(sigma2));
+}'
+```
+
+```{r}
+data1 <- list(N=300,y=sample1)
+data2 <- list(N=300,y=sample2)
+warmup <- 1000
+niter <- 4000
+fit1 <- stan(model_code = StanModel,data = data1,
+warmup = warmup,iter=niter,chains= 4)
+fit2 <- stan(model_code = StanModel,data = data2,
+warmup = warmup,iter=niter,chains= 4)
+```
+
+```{r}
+print('The summary of phi = 0.2')
+print(summary(fit1, pars=c("mu","phi","sigma2"))$summary[,c(1,4,8)],digits_summary=3)
+print('The summary of phi = 0.95')
+print(summary(fit2, pars=c("mu","phi","sigma2"))$summary[,c(1,4,8)],digits_summary=3)
+```
+
+The given parameters are (mu,phi,sigma) = (13,0.2,3) and (mu,phi,sigma) = (13,0.95,3). From the stan results, we can see that when phi = 0.2, the model can match the parameters. But When phi = 0.95, the estimation of mu is not very precise.
+
+The 95% credible intervals are also reported above.
+
+```{r}
+p1 <- extract(fit1)
+plot(p1$mu[1:niter],type="l",ylab="mu",main="Plot for mu ", col="steelblue")
+plot(p1$phi[1:niter],type="l",ylab="phi",main="Plot for phi", col="steelblue")
+plot(p1$sigma2[1:niter],type="l",ylab="sigma2",main="Plot for sigma2", col="steelblue")
+```
+
+The plots above show the results for data1 where given parameters are (mu,phi,sigma) =(13,0.2,3). From the results ,we can see that all three parameters converge very quickly, so most samples are effective samples.
+
+```{r}
+p2 <- extract(fit2)
+plot(p2$mu[1:niter],type="l",ylab="mu",main="Plot for mu", col="steelblue")
+plot(p2$phi[1:niter],type="l",ylab="phi",main="Plot for phi", col="steelblue")
+plot(p2$sigma2[1:niter],type="l",ylab="sigma2",main="Plot for sigma2", col="steelblue")
+
+```
+
+The plots above show the results for data2 where given parameters are (mu,phi,sigma) =(13,0.95,3). From the results ,we can see t hat for `phi` and `sigma`, they converge very fast which indicate that most samples are effective. However, we can see that `mu` can not converge, so I would say there are very limited samples being effective.
+
+b.ii
+
+```{r}
+par(mfrow = c(1,2))
+plot(p1$mu, p1$phi, main = "Joint Posterior of mu and phi", col="steelblue")
+plot(p2$mu, p2$phi, col="orange")
+```
+
+From the results, we can see that p1 has better result than p2 since the posterior of both parameters are normal models so the shape of joint posterior should also follow 'normal shape'.
+
+As for the reason, in the question `a` we make comparison between bigger absolute value `phi` and smaller absolute value `phi` and know that bigger absolute value `phi` will result in bigger variance. And in the `b.i` we can see parameter `mu` in p2 never converge.

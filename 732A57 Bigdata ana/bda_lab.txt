@@ -1,0 +1,18 @@
+# 登录sigma 需要密码和验证码
+ssh -X x_wuhwa@sigma.nsc.liu.se
+
+# 加载atom方便编辑
+module load atom-editor/1.45.0-bdist
+atom &
+
+#提交并排队
+sbatch -A liu-compute-2022-6 --reservation devel run_yarn_with_historyserver.q 
+
+或者
+
+sbatch -A liu-compute-2022-6 --reservation devel run_local_with_historyserver.q
+
+查看当前执行,无任何任务说明已经执行完成
+
+squeue -u x_wuhwa
+
