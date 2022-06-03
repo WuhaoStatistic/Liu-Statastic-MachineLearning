@@ -1,0 +1,7 @@
+Student Amadeus scored 8 on the Algebra exam and 13 on the History exam
+Student Rosa scored 19 on the Algebra exam and 22 on the History exam
+Student Mona scored 6 on the Algebra exam and 27 on the History exam
+Student Ludwig scored 12 on the Algebra exam and 18 on the History exam
+Student Karl scored 14 on the Algebra exam and 10 on the History exam
+
+
