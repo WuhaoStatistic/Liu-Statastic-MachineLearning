@@ -1,0 +1,7 @@
+#source("Example slide 13.R")
+hist(stat,50,col=gray(0.8),freq=FALSE,ylab="",xlab="stat",cex.axis=1.5,cex.lab=1.5,main="")
+segments(stat0, 0.007, 100, 0.007,lwd=3,col="red")
+segments(stat0, 0.007, stat0, -1,lwd=3,lty=2,col="red")
+segments(quantile(stat,probs=0.95), 0.005, 100, 0.005,lwd=3,col="blue")
+segments(quantile(stat,probs=0.95), 0.005, quantile(stat,probs=0.95), -1,lwd=3,lty=2,col="blue")
+legend("topright",col=c("red","blue"),pch=19,legend=c("stat0","95% quantile"),bty="n",cex=1.5)
