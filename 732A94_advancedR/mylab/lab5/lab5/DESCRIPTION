@@ -1,0 +1,19 @@
+Package: lab5class
+Type: Package
+Title: lab5
+Version: 0.1.0
+Author: WuhaoWang,XiaolinJiang G21
+Maintainer: WuhaoWang <wuhwa469@studetn.liu.se> Xiaolin Jiang <xiaji389@student.liu.se>
+Description: lab5 assignment.
+License: GPL
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+Imports: httr,rjson,methods
+Depends: R (>= 3.5.0)
+VignetteBuilder: knitr
+Suggests: 
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

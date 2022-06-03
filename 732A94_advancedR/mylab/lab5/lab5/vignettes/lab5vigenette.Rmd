@@ -1,0 +1,30 @@
+---
+title: "lab5class"
+author: "Group 21 Wuhao Wang,Xiaolin Jiang"
+date: "`2021/9/15`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{lab5class}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+# Import
+
+```{r}
+    library(lab5class)
+```
+
+# Methods
+
+To start with,object need to be initialized
+
+```{r}
+example <- lab5class$new("fi-8")
+example$getdata()
+```
+
+The `lab5class$new()` will return a new object.
+
+The `getCoordinate()` will receive a string, which should be one of the follows
+
+"fi-8, ch-8, no-7, no-4, dk-7, se-7, se-4, us-4, gl-7"

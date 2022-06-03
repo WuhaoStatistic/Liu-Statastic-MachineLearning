@@ -1,0 +1,69 @@
+---
+title: "lib4linerVignette"
+author: "Wuhao Wang Xiaolin Jiang"
+date: "`2021/09/07 15:35:00"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{lib4linerVignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Description
+
+This package offers a RC class for liner regression.This class offers the methods
+for computing *fitted_value*,*regression coefficient*,*residuals*,*the residual variance*,
+*the variance of the regression coefficients* and *t-values for each coefficient*.
+
+# Import
+
+```{r}
+    library(lab4liner)
+```
+
+# Methods
+
+The example below is to introduce how these functions work
+`linreg()` takes two parameter, object : a formula object ; data :  a data.frame object 
+
+```{r}
+lab4lm <- linreg(object = Petal.Length~Species, data = iris)
+```
+
+The `print()` prints out the vector containing coefficients.
+
+```{r}
+lab4lm$print()
+```
+
+The `plot()`  plots such pictures(package ggplot2 is needed here)
+
+```{r}
+lab4lm$plot()
+```
+
+The `resid()` returns the vector of residuals.
+
+```{r}
+head(lab4lm$resid())
+```
+
+The `pred()` returns the predicted values.
+
+```{r}
+head(lab4lm$pred())
+```
+
+The `coef()` returns the coefficients as a named vector.
+
+```{r}
+lab4lm$coef()
+```
+
+The `summary()`  returns a similar printout as printed for lm objects, but you only need to present
+the coefficients with their standard error, t-value and p-value as well as the estimate of ˆσ and the degrees
+of freedom in the model.
+
+```{r}
+lab4lm$summary()
+```

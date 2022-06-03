@@ -1,0 +1,6 @@
+useDynLib(LAB6, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+export(dynamic_programming)
+export(brute_force_knapsack)
+export(greedy_knapsack)
+export(FastDynamicProgramming)
