@@ -1,0 +1,163 @@
+---
+title: "Decision Theory Assignment1"
+author: "Wuhao Wang (wuhwa469)"
+date: '2022-10-01'
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment1
+
+**Question 1**
+
+The first question concerns a bank official concerned about the rate at
+which the five tellers working at the bank provide service for their
+customers. The official feels that the tellers all work at about the
+same speed; serving either 30, 40 or 50 customers per hour. Of these
+three estimates, 40 customers per hour is deemed to be twice as likely
+as the other two, which are assumed to be equally likely. To test this
+theory the official observes the five tellers for a two-hour period,
+during which the tellers serve 380 customers.
+
+It should then be shown that the posterior probabilities for the three
+possible speeds are approximately 0.000045, 0.99996 and 0.00000012
+respectively.
+
+**Answer1**
+
+From the example exists in the course slides, we can assume bank server
+into Poisson process. There will be $\lambda$ customers being severed
+per hour averagely. And we can also set duration of time $t$ (hours) and
+in total $r$ customers are severed. The posterior probability can be
+written as:
+
+$$
+P(\lambda|r,t) \propto\ \frac{(\lambda t)^r e^{-\lambda t}}{r!}P(\lambda)
+$$
+
+And for each $\lambda$,we can have:
+
+$$
+P(\lambda_i|r,t) = \frac{\frac{(\lambda_i t)^r e^{-\lambda_i t}}{r!}P(\lambda_i)}{\sum_{j=1}^3 \frac{(\lambda_j t)^r e^{-\lambda_j t}}{r!}P(\lambda_j)}
+$$
+
+Where $P(\lambda_j)$ is the prior of each $\lambda_j$.
+
+Note that $t^r$ and $r!$ and be canceled since both numerator and
+denominator have these components.
+
+$$
+P(\lambda_i|r,t) = \frac{\lambda_i^r e^{-\lambda_i t}P(\lambda_i)}{\sum_{j=1}^3 \lambda_j ^r e^{-\lambda_j t}P(\lambda_j)},i = 1,2,3
+$$
+
+From the description, we know that:
+
+$\lambda_1 = 30*5=150,\ P(\lambda_1)=0.25$
+
+$\lambda_2 = 40*5=200,\ P(\lambda_2)=0.5$
+
+$\lambda_3 = 50*5=250,,\ P(\lambda_3)=0.25$
+
+$t=2\ and\  r=380$
+
+When we do the calculation, we can change $t =120(mins)$ and
+$\lambda_i=\lambda_i/60$ to avoid overflow
+
+```{r}
+r = 380
+t = 120
+
+l1 = 150/60
+p1 = 0.25
+
+l2 = 200/60
+p2 = 0.5
+
+l3 = 250/60
+p3 = 0.25
+
+n1 = l1^r*exp(-t*l1)*p1
+n2 = l2^r*exp(-t*l2)*p2
+n3 = l3^r*exp(-t*l3)*p3
+cons = n1+n2+n3
+n1 = n1/cons
+n2 = n2/cons
+n3 = n3/cons
+df = data.frame(lambda = c(30,40,50),pro = c(n1,n2,n3))
+knitr::kable(df,format = "pandoc")
+```
+
+**Question 2**
+
+Assume that data follows a beta distribution with parameters a and b,
+i.e. the probability density function is
+$f(y|a,b)=y^{a-1}(1-y)^{b-1}/B(a,b)$ where $B(a,b)$ is the beta
+function. This could be the case when data consists of the analysed
+purity (in percent) of a narcotic substance in a number of seized
+packages.
+
+a) Show -- by using the properties of distributions belonging to the
+exponential class --that the probability density function of a conjugate
+family to the family of beta distributions can be expressed as
+
+$$
+f^`(a,b|\gamma,\sigma,\theta) \propto \frac{e^{\gamma a+\sigma b}}{B(a,b)^{\theta}}
+$$
+b) Find the corresponding expression for the probability density
+function of the posterior distribution when a sample of size n has been
+obtained
+
+**Answer(a)**
+
+We can rewrite formula in the question in :
+
+$f(y|a,b)=e^{(a-1)lny+(b-1)ln(1-y)-lnB(a,b)}=e^{alny+bln(1-y)-lny-ln(1-y)-lnB(a,b)}$
+
+And from the course slides, we can 'decomposite' the formula in the form
+of exponential family with:
+
+$A_1(\theta)=a$
+
+$A_2(\theta)=b$
+
+$B_1(y)=lny$
+
+$B_2(y)=ln(1-y)$
+
+$C(y)=-lny-ln(1-y)$
+
+$D(\theta)=-lnB(a,b)$
+
+By using the property:
+
+the prior should be :
+
+$exp(A_1(\theta)*\alpha_1+A_2(\theta)*\alpha_2+D(\theta)*\alpha_3)$
+
+We can plug in our notation above, the probability density function of a
+conjugate family to the family of beta distributions can be expressed
+as:
+
+$$\frac{e^{a*\alpha_1+b*\alpha_2}}{B(a,b)^{\alpha_3}}$$
+
+**Answer(b)**
+
+The likelihood can be written as
+
+$$L(y_{1:n}|a,b)\propto exp(a*\sum_{i=1}^nln\ y_i+b\sum_{i=1}^nln\ (1-y_i)-\sum_{i=1}^nln\ (y_i-y_i^2)-nln\ B(a,b))$$
+
+From the question (a), we can have the prior(now we use the notation
+$\alpha_1 -> \gamma$, $\alpha_2->\delta$ and $\alpha_3->\theta$)
+
+$$p(a,b) = exp(a*\gamma+b*\delta-\theta*ln\ B(a,b))$$So, the posterior
+
+$$
+q(a,b|y_{1:n},\gamma,\delta,\theta) \ \propto\ exp(a*(\gamma+\sum_{i=1}^nln\ y_i)+b*(\delta+\sum_{i=1}^nln\ (1-y_i))-\sum_{i=1}^nln\ (y_i-y_i^2)-ln\ B(a,b)^{\theta+n})
+$$
