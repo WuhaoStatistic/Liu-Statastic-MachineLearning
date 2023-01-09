@@ -1,6 +1,0 @@
-gensim
-matplotlib
-pandas
-pyldavis
-scikit-learn
-spacy
