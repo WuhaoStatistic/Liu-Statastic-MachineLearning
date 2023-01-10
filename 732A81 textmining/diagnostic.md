@@ -68,11 +68,13 @@ Undersampling is used when data is sufficient.
 
 K-means : Iteratively get centroids, and assign every data point to one of the centroids. The number of centroids is the same as number of clusters. This model is hard classifier, which means the results are discriminative.
 
-LDA : LDA treats  each document as a multinomial distribution of topics, and each topic is modeled as multi distribution of words. So, when we use LDA to do prediction on documents or words, the results we have is a probability vector.
+LDA : LDA treats  each document as a multinomial distribution of topics, and each topic is modeled as multi distribution of words. So, when we use LDA to do prediction on documents or words, the results we have is a probability vector. In LDA model ,passes menas how many times we feed whole corpus into the model.
 
 **Why log-likelihood for LDA not accuracy**
 
-Because LDA is a soft model, it only says the probability of a termed can be assigned to a document or a document can be assigned to a topic. So likelihood can better tell if a LDA model is better than another LDA model, high log-likelihood
+Because LDA does not have 'label', the topic is generatived from the corpus. So we dont have a golden standard to calculate the accuracy.
+
+Because LDA is a soft model, it only says the probability of a termed can be assigned to a document or a document can be assigned to a topic. So likelihood can tell if a LDA model is better than another LDA model. Higher loglihood means the documents have higher probability belong to current topic.
 
 **When LDA when K-means**
 
@@ -122,7 +124,7 @@ embedding layer is more flexible because the data in hand might be in different 
 
 A good solution is using the pre-trained word-vector and fine-tuning them through the embedding layer and data in hand. Or get a pre-trained embedding layer and fine-tune them using the data in hand.
 
-### Lab 5
+### Lab 5 NER named enrity recognition 
 
 **1 Mention and entity [very important]**
 
